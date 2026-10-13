@@ -97,7 +97,7 @@ local function parseSessionName(fullname: string): {path: string, name: string}
         end
     end
 
-    local fullpath = fullname:gsub(pathSep, "/")
+    local fullpath = if pathSep ~= nil then fullname:gsub(pathSep, "/") else fullname
     local dirname = projectName(fullpath)
     
     local name = if branchName ~= nil then `${dirname} (${branchName})` else dirname
