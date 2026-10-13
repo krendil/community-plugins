@@ -103,12 +103,9 @@ local function parseSessionName(fullname: string): {path: string, name: string}
     return name, fullpath
 end
 
-local function addProject(projects, limit, name, dir, session_file)
-    if #projects >= limit then
-        return
-    end
+local function addProject(projects, count_so_far, name, dir, session_file): int
     if projects[dir] ~= nil then
-        return
+        return count_so_far
     end
 
     local info = noctalia.fileInfo(session_file or dir)
@@ -118,33 +115,38 @@ local function addProject(projects, limit, name, dir, session_file)
         dir = dir,
         mtime = if info ~= nil then info.mtime else 0
     }
+    return count_so_far + 1
 end
 
 local function loadProjects(onDone)
 	local limit = getMaxResults()
 	local projDir = getProjectsDir()
+    local count = 0
 
     local projects = {}
 
+    local confDir = noctalia.getenv('HOME') .. '/.config/nvim'
+    count = addProject(projects, count, projectName(confDir), confDir, nil)
+
 	local persistence_sessions = noctalia.listDir('~/.local/state/nvim/sessions') or {}
     for _, psession in persistence_sessions do
+        if count >= limit then break end
         local name, dir = parseSessionName(psession)
-        addProject(projects, limit, name, dir, '~/.local/state/nvim/sessions/' .. psession)
+        count = addProject(projects, count, name, dir, '~/.local/state/nvim/sessions/' .. psession)
     end
 
 	local other_sessions = noctalia.listDir('~/.local/share/nvim/sessions') or {}
     for _, osession in other_sessions do
+        if count >= limit then break end
         local name, dir = parseSessionName(osession)
-        addProject(projects, limit, name, dir, '~/.local/share/nvim/sessions/' .. osession)
+        count = addProject(projects, count, name, dir, '~/.local/share/nvim/sessions/' .. osession)
     end
 
 	local project_dirs = noctalia.listDir(projDir) or {}
     for _, dir in project_dirs do
-        addProject(projects, limit, projectName(dir), projDir .. '/' .. dir, nil)
+        if count >= limit then break end
+        count = addProject(projects, count, projectName(dir), projDir .. '/' .. dir, nil)
     end
-
-    local confDir = noctalia.getenv('HOME') .. '/.config/nvim'
-    addProject(projects, limit, projectName(confDir), confDir, nil)
 
     cachedProjects = projects
     onDone(projects)
