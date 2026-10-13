@@ -16,7 +16,6 @@ end
 local function getBaseCommand(): string
 	local d = noctalia.getConfig("command")
 	if type(d) == "string" and d ~= "" then
-        noctalia.log("'"..d.."'")
 		return d
 	end
 	return "nvim"
@@ -237,7 +236,6 @@ function onActivate(id: string)
             local first = customTerm:match("^%S+") or customTerm
             local bin = first:match("([^/]+)$") or first
             local separator = (bin == "gnome-terminal" or bin == "kgx" or bin == "ptyxis") and "--" or "-e"
-            noctalia.log("Custom terminal")
             noctalia.runAsync({customTerm, separator, table.unpack(args)})
         else
             local cmd = ""
@@ -245,13 +243,10 @@ function onActivate(id: string)
                 cmd = cmd .. shellQuote(arg)
                 cmd = cmd .. " "
             end
-            noctalia.log("Standard terminal")
             -- We shellQuote the entire thing again here, otherwise sh only executes the first word
             noctalia.runInTerminal(shellQuote(cmd))
         end
     else
-        noctalia.log("Run outside")
-        noctalia.log(table.concat(args, ' '))
         noctalia.runAsync(args)
     end
 end
